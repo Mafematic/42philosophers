@@ -1,0 +1,16 @@
+
+Arguments: 
+number_of_philosophers = number of forks (Integer)
+time_to_die (in milliseconds)
+time_to_eat (in milliseconds)
+time_to_sleep (in milliseconds)
+[number_of_times_each_philosopher_must_eat]
+
+memset --> string.h
+gettimeofday --> sys/time.h
+
+pthread.h
+pthread_create, pthread_detach, pthread_join, pthread_mutex_init,
+pthread_mutex_destroy, pthread_mutex_lock, pthread_mutex_unlock
+
+https://www.youtube.com/watch?v=dOVdsd31WNg
