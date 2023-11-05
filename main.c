@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 typedef struct
 {
@@ -19,6 +20,7 @@ typedef struct phil_
 	int phil_id;
 	pthread_t thread_handle;
 	int eat_count;
+	long long last_meal_time;
 } phil_t;
 
 typedef struct spoon_
@@ -37,6 +39,24 @@ typedef struct
 	t_arguments *args;
 } t_philosopher_args;
 
+/* Creating Timestamps */
+long long current_timestamp()
+{
+	struct timeval te;
+	gettimeofday(&te, NULL);										 
+	long long milliseconds = te.tv_sec * 1000LL + te.tv_usec / 1000;
+	return milliseconds;
+}
+
+void print_state(int philosopher_number, const char *state)
+{
+	long long timestamp = current_timestamp();
+	printf("%lld %d %s\n", timestamp, philosopher_number, state);
+}
+
+/*Time stamp end*/
+
+/* Checking arguments start*/
 static int ft_iswhitespace(char c)
 {
 	if ((c >= 9 && c <= 13) || c == ' ')
@@ -99,6 +119,8 @@ bool parse_arguments(int argc, char **argv, t_arguments *args)
 	}
 	return true;
 }
+
+/*Checking Arguments end*/
 
 spoon_t *phil_get_right_spoon(phil_t *phil, spoon_t *spoon, t_arguments *args)
 {
@@ -280,10 +302,12 @@ void *philosopher_fn(void *arg)
 	{
 		if (philosopher_get_access_both_spoons(phil, spoon, args))
 		{
-
+			print_state(phil->phil_id, "has taken a fork");
 			phil_eat(phil, spoon, args);
+			print_state(phil->phil_id, "is eating");
 			philosopher_release_both_spoons(phil, spoon, args);
-			sleep(1); /*  For next sec for next attemptu to get spoons */
+			print_state(phil->phil_id, "is sleeping");
+			usleep(args->time_to_sleep * 1000);
 		}
 	}
 }
@@ -314,7 +338,7 @@ int main(int argc, char **argv)
 		pthread_cond_init(&spoon[i].cv, NULL);
 		phil[i].phil_id = i;
 		phil[i].eat_count = 0;
-		phil_args[i].phil = &phil[i]; // <--- Initialize philosopher args
+		phil_args[i].phil = &phil[i];
 		phil_args[i].spoon = spoon;
 		phil_args[i].args = &args;
 		i++;
