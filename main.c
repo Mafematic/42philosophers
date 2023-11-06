@@ -4,6 +4,8 @@
 #include <assert.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <limits.h>
+#include <stdlib.h>
 
 typedef struct
 {
@@ -13,6 +15,8 @@ typedef struct
 	int time_to_sleep;
 	int number_of_times_each_philosopher_must_eat;
 	bool number_of_times_each_philosopher_must_eat_bool;
+	long long start_time;
+	pthread_mutex_t eat_count_mutex;
 } t_arguments;
 
 typedef struct phil_
@@ -24,35 +28,31 @@ typedef struct phil_
 	pthread_mutex_t mutex;
 } phil_t;
 
-typedef struct spoon_
+typedef struct fork_
 {
-	int spoon_id;
-	bool is_used;
-	phil_t *phil;
+	int fork_id;
 	pthread_mutex_t mutex;
-	//pthread_cond_t cv;
-} spoon_t;
+} t_fork;
 
 typedef struct
 {
 	phil_t *phil;
-	spoon_t *spoon;
+	t_fork *fork;
 	t_arguments *args;
 } t_philosopher_args;
 
-/* Creating Timestamps */
-long long current_timestamp()
+long long timestamp(t_arguments *args)
 {
-	struct timeval te;
-	gettimeofday(&te, NULL);										 
-	long long milliseconds = te.tv_sec * 1000LL + te.tv_usec / 1000;
-	return milliseconds;
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	long long current_time = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+	return (current_time - args->start_time); // Subtract the start time to get the relative time
 }
 
-void print_state(int philosopher_number, const char *state)
+void print_state(int philosopher_number, const char *state, t_arguments *args)
 {
-	long long timestamp = current_timestamp();
-	printf("%lld %d %s\n", timestamp, philosopher_number, state);
+	long long time = timestamp(args);
+	printf("%lld %d %s\n", time, philosopher_number, state);
 }
 
 /*Time stamp end*/
@@ -123,188 +123,159 @@ bool parse_arguments(int argc, char **argv, t_arguments *args)
 
 /*Checking Arguments end*/
 
-spoon_t *phil_get_right_spoon(phil_t *phil, spoon_t *spoon, t_arguments *args)
+t_fork *phil_get_right_fork(phil_t *phil, t_fork *fork, t_arguments *args)
 {
 	int phil_id;
 
 	phil_id = phil->phil_id;
 	if (phil_id == 0)
-		return &spoon[args->number_of_philosophers - 1];
-	return &spoon[phil_id - 1];
+		return &fork[args->number_of_philosophers - 1];
+	return &fork[phil_id - 1];
 }
 
-spoon_t *phil_get_left_spoon(phil_t *phil, spoon_t *spoon)
+t_fork *phil_get_left_fork(phil_t *phil, t_fork *fork)
 {
-	return &spoon[phil->phil_id];
+	return &fork[phil->phil_id];
 }
 
-void phil_eat(phil_t *phil, spoon_t *spoon, t_arguments *args)
+void philosopher_release_both_forks(phil_t *phil, t_fork *fork, t_arguments *args)
 {
-	spoon_t *left_spoon;
-	spoon_t *right_spoon;
+	t_fork *left_fork;
+	t_fork *right_fork;
 
-	//left_spoon = phil_get_left_spoon(phil, spoon);
-	//right_spoon = phil_get_right_spoon(phil, spoon, args);
+	left_fork = phil_get_left_fork(phil, fork);
+	right_fork = phil_get_right_fork(phil, fork, args);
+	pthread_mutex_unlock(&left_fork->mutex);
+	pthread_mutex_unlock(&right_fork->mutex);
+}
 
+void philosopher_get_access_both_forks(phil_t *phil, t_fork *fork, t_arguments *args)
+{
+	t_fork *left_fork = phil_get_left_fork(phil, fork);
+	t_fork *right_fork = phil_get_right_fork(phil, fork, args);
+
+	// Ensure that first_fork is the one with the lower ID
+	t_fork *first_fork = (left_fork->fork_id < right_fork->fork_id) ? left_fork : right_fork;
+	t_fork *second_fork = (left_fork->fork_id < right_fork->fork_id) ? right_fork : left_fork;
+
+	// Lock and acquire the first fork
+	pthread_mutex_lock(&first_fork->mutex);
+	print_state(phil->phil_id, "has taken a fork", args);
+	pthread_mutex_lock(&second_fork->mutex);
+	print_state(phil->phil_id, "has taken a fork", args);
+}
+
+void ft_usleep(int ms, t_arguments *args)
+{
+	long int time;
+
+	time = timestamp(args);
+	while (timestamp(args) - time < ms)
+		usleep(ms / 10);
+}
+
+void phil_eat(phil_t *phil, t_fork *fork, t_arguments *args)
+{
+	philosopher_get_access_both_forks(phil, fork, args);
 	pthread_mutex_lock(&phil->mutex);
-	phil->last_meal_time = current_timestamp();
-	print_state(phil->phil_id, "is eating");
-	pthread_mutex_unlock(&phil->mutex);
-
-	usleep(200 * 1000); // args->time_to_eat;
+	phil->last_meal_time = timestamp(args);
+	print_state(phil->phil_id, "is eating", args);
 	phil->eat_count++;
-
-	//printf("Phil %d eats with spoon [%d %d] for %d times\n",
-	//	   phil->phil_id, left_spoon->spoon_id, right_spoon->spoon_id, phil->eat_count);
-
-	//pthread_mutex_lock(&phil->mutex);
-	if (phil->eat_count == args->number_of_times_each_philosopher_must_eat && args->number_of_times_each_philosopher_must_eat_bool == 1)
-	{
-		//
-	}
-	//pthread_mutex_unlock(&phil->mutex);
-}
-
-void philosopher_release_both_spoons(phil_t *phil, spoon_t *spoon, t_arguments *args)
-{
-	spoon_t *left_spoon;
-	spoon_t *right_spoon;
-
-	left_spoon = phil_get_left_spoon(phil, spoon);
-	right_spoon = phil_get_right_spoon(phil, spoon, args);
-
-	pthread_mutex_lock(&left_spoon->mutex);
-	pthread_mutex_lock(&right_spoon->mutex);
-	left_spoon->phil = NULL;
-	left_spoon->is_used = false;
-	pthread_mutex_unlock(&left_spoon->mutex);
-	right_spoon->phil = NULL;
-	right_spoon->is_used = false;
-	pthread_mutex_unlock(&right_spoon->mutex);
-}
-
-bool philosopher_get_access_both_spoons(phil_t *phil, spoon_t *spoon, t_arguments *args)
-{
-	spoon_t *left_spoon = phil_get_left_spoon(phil, spoon);
-	spoon_t *right_spoon = phil_get_right_spoon(phil, spoon, args);
-
-	// Ensure that first_spoon is the one with the lower ID
-	spoon_t *first_spoon = (left_spoon->spoon_id < right_spoon->spoon_id) ? left_spoon : right_spoon;
-	spoon_t *second_spoon = (left_spoon->spoon_id < right_spoon->spoon_id) ? right_spoon : left_spoon;
-
-	// Lock and acquire the first spoon
-	pthread_mutex_lock(&first_spoon->mutex);
-	while (first_spoon->is_used && first_spoon->phil != phil)
-	{
-		pthread_mutex_unlock(&first_spoon->mutex);
-		usleep(1000); // Random delay to prevent starvation
-		pthread_mutex_lock(&first_spoon->mutex);
-	}
-	first_spoon->is_used = true;
-	first_spoon->phil = phil;
-	pthread_mutex_unlock(&first_spoon->mutex);
-
-	// Lock and try to acquire the second spoon
-	pthread_mutex_lock(&second_spoon->mutex);
-	if (!second_spoon->is_used)
-	{
-		second_spoon->is_used = true;
-		second_spoon->phil = phil;
-		pthread_mutex_unlock(&second_spoon->mutex);
-		return true; // Successfully acquired both spoons
-	}
-	else
-	{
-		// If the second spoon is not available, release the first spoon
-		pthread_mutex_lock(&first_spoon->mutex);
-		first_spoon->is_used = false;
-		first_spoon->phil = NULL;
-		pthread_mutex_unlock(&first_spoon->mutex);
-		pthread_mutex_unlock(&second_spoon->mutex);
-		return false;
-	}
+	ft_usleep(args->time_to_eat, args);
+	pthread_mutex_unlock(&phil->mutex);
+	philosopher_release_both_forks(phil, fork, args);
 }
 
 void *philosopher_fn(void *arg)
 {
 	t_philosopher_args *phil_args = (t_philosopher_args *)arg;
 	phil_t *phil = phil_args->phil;
-	spoon_t *spoon = phil_args->spoon;
+	t_fork *fork = phil_args->fork;
 	t_arguments *args = phil_args->args;
 
+	if (phil->phil_id % 2 == 0)
+		ft_usleep(args->time_to_eat / 10, args);
 	while (1)
 	{
-		// if (current_timestamp() - phil->last_meal_time > args->time_to_die)
-		/* Please delete*/
-		if (current_timestamp() - phil->last_meal_time > 410)
+		if (timestamp(args) - phil->last_meal_time > args->time_to_die)
 		{
-			print_state(phil->phil_id, "Philosopher died");
-			break; 
+			print_state(phil->phil_id, "died", args);
+			exit(0);
 		}
-
-		if (philosopher_get_access_both_spoons(phil, spoon, args))
-		{
-			print_state(phil->phil_id, "has taken a fork");
-			phil_eat(phil, spoon, args);
-			philosopher_release_both_spoons(phil, spoon, args);
-		}
-		print_state(phil->phil_id, "is sleeping");
-		// usleep(args->time_to_sleep * 1000);
-		/* Please delete*/
-		usleep(100 * 1000);
-		print_state(phil->phil_id, "is thinking");
-		usleep(1000);
+		phil_eat(phil, fork, args);
+		print_state(phil->phil_id, "is sleeping", args);
+		ft_usleep(args->time_to_sleep, args);
+		print_state(phil->phil_id, "is thinking", args);
+		usleep(8000);
 	}
-	return NULL; 
+	return NULL;
 }
 
-//int main(int argc, char **argv)
-int main(void)
+// int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int i;
-	pthread_attr_t attr;
 	t_arguments args;
 
-	/*if (!parse_arguments(argc, argv, &args))
+	if (!parse_arguments(argc, argv, &args))
 	{
 		return 1;
-	}*/
-	/* Please delete later */
-	args.number_of_philosophers = 5; 
+	}
+
+	struct timeval te;
+	gettimeofday(&te, NULL);
+	args.start_time = te.tv_sec * 1000LL + te.tv_usec / 1000; // Record the start time before any philosopher starts
+	pthread_mutex_init(&args.eat_count_mutex, NULL);
 
 	phil_t phil[args.number_of_philosophers];
-	spoon_t spoon[args.number_of_philosophers];
+	t_fork fork[args.number_of_philosophers];
 	t_philosopher_args phil_args[args.number_of_philosophers];
 
-	/* Initialize all spoons */
+	/* Initialize all forks */
 	i = 0;
 	while (i < args.number_of_philosophers)
 	{
-		spoon[i].spoon_id = i;
-		spoon[i].is_used = false;
-		spoon[i].phil = NULL;
-		pthread_mutex_init(&spoon[i].mutex, NULL);
-		//pthread_cond_init(&spoon[i].cv, NULL);
+		fork[i].fork_id = i;
+		pthread_mutex_init(&fork[i].mutex, NULL);
 		phil[i].phil_id = i;
 		phil[i].eat_count = 0;
-		phil[i].last_meal_time = current_timestamp();
-		pthread_mutex_init(&phil[i].mutex, NULL); 
+		phil[i].last_meal_time = timestamp(&args);
+		pthread_mutex_init(&phil[i].mutex, NULL);
 		phil_args[i].phil = &phil[i];
-		phil_args[i].spoon = spoon;
+		phil_args[i].fork = fork;
 		phil_args[i].args = &args;
 		i++;
 	}
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
 	/* Create philosopher threads */
 	i = 0;
 	while (i < args.number_of_philosophers)
 	{
-		pthread_create(&phil[i].thread_handle, &attr, philosopher_fn, &phil_args[i]);
+		if (pthread_create(&phil[i].thread_handle, NULL, philosopher_fn, &phil_args[i]) != 0)
+		{
+			printf("Failed to create thread for philosopher %d\n", i);
+			return 1; 
+		}
 		i++;
 	}
-	pthread_exit(0);
+
+	i = 0;
+	while (i < args.number_of_philosophers)
+	{
+		if (pthread_join(phil[i].thread_handle, NULL) != 0)
+		{
+			printf("Failed to join thread for philosopher %d\n", i);
+		}
+		i++;
+	}
+
+	i = 0; 
+	while (i < args.number_of_philosophers)
+	{
+		pthread_mutex_destroy(&fork[i].mutex);
+		pthread_mutex_destroy(&phil[i].mutex);
+	}
+	pthread_mutex_destroy(&args.eat_count_mutex);
 	return 0;
 }
 
