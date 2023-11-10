@@ -7,7 +7,7 @@
 #include <limits.h>
 #include <stdlib.h>
 
-typedef struct
+typedef struct s_arguments
 {
 	int number_of_philosophers;
 	int time_to_die;
@@ -54,8 +54,6 @@ void print_state(int philosopher_number, const char *state, t_arguments *args)
 	long long time = timestamp(args);
 	printf("%lld %d %s\n", time, philosopher_number, state);
 }
-
-/*Time stamp end*/
 
 /* Checking arguments start*/
 static int ft_iswhitespace(char c)
@@ -125,17 +123,17 @@ bool parse_arguments(int argc, char **argv, t_arguments *args)
 
 t_fork *phil_get_right_fork(phil_t *phil, t_fork *fork, t_arguments *args)
 {
-	int phil_id;
+	int index = phil->phil_id - 1;
 
-	phil_id = phil->phil_id;
-	if (phil_id == 0)
+	if (index == 0)
 		return &fork[args->number_of_philosophers - 1];
-	return &fork[phil_id - 1];
+	return &fork[index - 1];
 }
 
 t_fork *phil_get_left_fork(phil_t *phil, t_fork *fork)
 {
-	return &fork[phil->phil_id];
+	int index = phil->phil_id - 1;
+	return &fork[index];
 }
 
 void philosopher_release_both_forks(phil_t *phil, t_fork *fork, t_arguments *args)
@@ -237,7 +235,7 @@ int main(int argc, char **argv)
 	{
 		fork[i].fork_id = i;
 		pthread_mutex_init(&fork[i].mutex, NULL);
-		phil[i].phil_id = i;
+		phil[i].phil_id = i + 1;
 		phil[i].eat_count = 0;
 		phil[i].last_meal_time = timestamp(&args);
 		pthread_mutex_init(&phil[i].mutex, NULL);
