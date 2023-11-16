@@ -7,6 +7,7 @@
 #include <limits.h>
 #include <stdlib.h>
 
+
 typedef struct s_arguments
 {
 	int number_of_philosophers;
@@ -16,7 +17,12 @@ typedef struct s_arguments
 	int number_of_times_each_philosopher_must_eat;
 	bool number_of_times_each_philosopher_must_eat_bool;
 	long long start_time;
+	int have_started;
+	pthread_mutex_t have_started_mutex;
+	int eat_count;
 	pthread_mutex_t eat_count_mutex;
+	int stop_dinner;
+	pthread_mutex_t stop_dinner_mutex;
 } t_arguments;
 
 typedef struct phil_
@@ -156,7 +162,6 @@ void philosopher_get_access_both_forks(phil_t *phil, t_fork *fork, t_arguments *
 	t_fork *first_fork = (left_fork->fork_id < right_fork->fork_id) ? left_fork : right_fork;
 	t_fork *second_fork = (left_fork->fork_id < right_fork->fork_id) ? right_fork : left_fork;
 
-	// Lock and acquire the first fork
 	pthread_mutex_lock(&first_fork->mutex);
 	print_state(phil->phil_id, "has taken a fork", args);
 	pthread_mutex_lock(&second_fork->mutex);
@@ -184,6 +189,32 @@ void phil_eat(phil_t *phil, t_fork *fork, t_arguments *args)
 	philosopher_release_both_forks(phil, fork, args);
 }
 
+void *monitor_fn(void *arg)
+{
+	t_arguments *args = (t_arguments *)arg;
+
+	while (1)
+	{
+		pthread_mutex_lock(&args->stop_dinner_mutex);
+		if (args->stop_dinner)
+		{
+			pthread_mutex_unlock(&args->stop_dinner_mutex);
+			return NULL;
+		}
+		pthread_mutex_unlock(&args->stop_dinner_mutex);
+		usleep(50);
+	}
+	return NULL;
+}
+
+int check_for_stop(t_arguments *args) {
+    int stop = 0;
+    pthread_mutex_lock(&args->stop_dinner_mutex);
+    stop = args->stop_dinner;
+    pthread_mutex_unlock(&args->stop_dinner_mutex);
+    return stop;
+}
+
 void *philosopher_fn(void *arg)
 {
 	t_philosopher_args *phil_args = (t_philosopher_args *)arg;
@@ -195,16 +226,31 @@ void *philosopher_fn(void *arg)
 		ft_usleep(args->time_to_eat / 10, args);
 	while (1)
 	{
+		pthread_mutex_lock(&args->stop_dinner_mutex);
+		if (args->stop_dinner)
+		{
+			pthread_mutex_unlock(&args->stop_dinner_mutex);
+			return NULL;
+		}
+		pthread_mutex_unlock(&args->stop_dinner_mutex);
+
 		if (timestamp(args) - phil->last_meal_time > args->time_to_die)
 		{
-			print_state(phil->phil_id, "died", args);
-			exit(0);
+			pthread_mutex_lock(&args->stop_dinner_mutex);
+			if (!args->stop_dinner) // Check the flag to prevent multiple death messages
+			{
+				args->stop_dinner = 1;
+				print_state(phil->phil_id, "died", args);
+			}
+			pthread_mutex_unlock(&args->stop_dinner_mutex);
+			return NULL; 
 		}
 		phil_eat(phil, fork, args);
+		
 		print_state(phil->phil_id, "is sleeping", args);
 		ft_usleep(args->time_to_sleep, args);
 		print_state(phil->phil_id, "is thinking", args);
-		usleep(8000);
+		usleep(5500);
 	}
 	return NULL;
 }
@@ -224,6 +270,10 @@ int main(int argc, char **argv)
 	gettimeofday(&te, NULL);
 	args.start_time = te.tv_sec * 1000LL + te.tv_usec / 1000; // Record the start time before any philosopher starts
 	pthread_mutex_init(&args.eat_count_mutex, NULL);
+	args.stop_dinner = 0;
+	pthread_mutex_init(&args.stop_dinner_mutex, NULL);
+	args.have_started = 0;								// Add this flag to your t_arguments structure
+	pthread_mutex_init(&args.have_started_mutex, NULL); // Add this mutex as well
 
 	phil_t phil[args.number_of_philosophers];
 	t_fork fork[args.number_of_philosophers];
@@ -244,19 +294,27 @@ int main(int argc, char **argv)
 		phil_args[i].args = &args;
 		i++;
 	}
-
-	/* Create philosopher threads */
+	/* Create Monito Thread*/
+	pthread_t monitor_thread;
+	if (pthread_create(&monitor_thread, NULL, monitor_fn, (void*)&args) != 0)
+	{
+		printf("Failed to create monitor thread\n");
+		return 1;
+	}
+	pthread_mutex_lock(&args.have_started_mutex);
+	args.have_started = 1;
+	pthread_mutex_unlock(&args.have_started_mutex);
 	i = 0;
+
 	while (i < args.number_of_philosophers)
 	{
-		if (pthread_create(&phil[i].thread_handle, NULL, philosopher_fn, &phil_args[i]) != 0)
+		if (pthread_create(&phil[i].thread_handle, NULL, philosopher_fn, (void*)&phil_args[i]) != 0)
 		{
 			printf("Failed to create thread for philosopher %d\n", i);
-			return 1; 
+			return 1;
 		}
 		i++;
 	}
-
 	i = 0;
 	while (i < args.number_of_philosophers)
 	{
@@ -266,14 +324,23 @@ int main(int argc, char **argv)
 		}
 		i++;
 	}
+	if (pthread_join(monitor_thread, NULL) != 0)
+	{
+		printf("Failed to join monitor thread\n");
+		// Handle error
+	}
 
-	i = 0; 
+	i = 0;
 	while (i < args.number_of_philosophers)
 	{
 		pthread_mutex_destroy(&fork[i].mutex);
 		pthread_mutex_destroy(&phil[i].mutex);
+		i++;
 	}
 	pthread_mutex_destroy(&args.eat_count_mutex);
+	pthread_mutex_destroy(&args.stop_dinner_mutex);
+	pthread_mutex_destroy(&args.have_started_mutex);
+
 	return 0;
 }
 
