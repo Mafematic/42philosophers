@@ -15,8 +15,8 @@ typedef struct s_arguments
 	int time_to_die;
 	int time_to_eat;
 	int time_to_sleep;
-	int number_of_times_each_philosopher_must_eat;
-	bool number_of_times_each_philosopher_must_eat_bool;
+	int num_of_times_each_philosopher_must_eat;
+	bool num_of_times_each_philosopher_must_eat_bool;
 	long long start_time;
 	int have_started;
 	pthread_mutex_t have_started_mutex;
@@ -48,6 +48,12 @@ typedef struct
 	t_arguments *args;
 } t_philosopher_args;
 
+void ft_usleep(int ms, t_arguments *args);
+void *monitor_fn(void *arg);
 bool parse_arguments(int argc, char **argv, t_arguments *args);
+void phil_eat(phil_t *phil, t_fork *fork, t_arguments *args);
+void *philosopher_fn(void *arg);
+void print_state(int phil_id, const char *state, t_arguments *args);
+long long timestamp(t_arguments *args);
 
 #endif
