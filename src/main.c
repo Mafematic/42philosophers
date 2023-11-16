@@ -1,51 +1,4 @@
-#include <stdio.h>
-#include <pthread.h>
-#include <stdbool.h>
-#include <assert.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <limits.h>
-#include <stdlib.h>
-
-
-typedef struct s_arguments
-{
-	int number_of_philosophers;
-	int time_to_die;
-	int time_to_eat;
-	int time_to_sleep;
-	int number_of_times_each_philosopher_must_eat;
-	bool number_of_times_each_philosopher_must_eat_bool;
-	long long start_time;
-	int have_started;
-	pthread_mutex_t have_started_mutex;
-	int eat_count;
-	pthread_mutex_t eat_count_mutex;
-	int stop_dinner;
-	pthread_mutex_t stop_dinner_mutex;
-} t_arguments;
-
-typedef struct phil_
-{
-	int phil_id;
-	pthread_t thread_handle;
-	int eat_count;
-	long long last_meal_time;
-	pthread_mutex_t mutex;
-} phil_t;
-
-typedef struct fork_
-{
-	int fork_id;
-	pthread_mutex_t mutex;
-} t_fork;
-
-typedef struct
-{
-	phil_t *phil;
-	t_fork *fork;
-	t_arguments *args;
-} t_philosopher_args;
+#include "../inc/philo.h"
 
 long long timestamp(t_arguments *args)
 {
@@ -60,72 +13,6 @@ void print_state(int philosopher_number, const char *state, t_arguments *args)
 	long long time = timestamp(args);
 	printf("%lld %d %s\n", time, philosopher_number, state);
 }
-
-/* Checking arguments start*/
-static int ft_iswhitespace(char c)
-{
-	if ((c >= 9 && c <= 13) || c == ' ')
-	{
-		return (1);
-	}
-	return (0);
-}
-
-long ft_atol(const char *nptr)
-{
-	int i;
-	int is_negative;
-	long num;
-
-	i = 0;
-	is_negative = 1;
-	num = 0;
-	while (ft_iswhitespace(nptr[i]))
-		i++;
-	if (nptr[i] == '+')
-		i++;
-	else if (nptr[i] == '-')
-	{
-		is_negative *= -1;
-		i++;
-	}
-	if (!(nptr[i] >= '0' && nptr[i] <= '9'))
-		return (0);
-	while (nptr[i] >= '0' && nptr[i] <= '9')
-	{
-		num *= 10;
-		num += nptr[i] - '0';
-		i++;
-	}
-	return (num * is_negative);
-}
-
-bool parse_arguments(int argc, char **argv, t_arguments *args)
-{
-	if (argc < 5 || argc > 6)
-	{
-		write(2, "Usage: ./philo <number_of_philosophers> <time_to_die> <time_to_eat> <time_to_sleep> [number_of_times_each_philosopher_must_eat]\n", 128);
-		return false;
-	}
-	args->number_of_philosophers = ft_atol(argv[1]);
-	args->time_to_die = ft_atol(argv[2]);
-	args->time_to_eat = ft_atol(argv[3]);
-	args->time_to_sleep = ft_atol(argv[4]);
-
-	if (argc == 6)
-	{
-		args->number_of_times_each_philosopher_must_eat = ft_atol(argv[5]);
-		args->number_of_times_each_philosopher_must_eat_bool = true;
-	}
-	else
-	{
-		args->number_of_times_each_philosopher_must_eat = 0;
-		args->number_of_times_each_philosopher_must_eat_bool = false;
-	}
-	return true;
-}
-
-/*Checking Arguments end*/
 
 t_fork *phil_get_right_fork(phil_t *phil, t_fork *fork, t_arguments *args)
 {
@@ -234,7 +121,9 @@ void *philosopher_fn(void *arg)
 		}
 		pthread_mutex_unlock(&args->stop_dinner_mutex);
 
-		if (timestamp(args) - phil->last_meal_time > args->time_to_die)
+		if ((timestamp(args) - phil->last_meal_time > args->time_to_die)
+			|| (args->number_of_times_each_philosopher_must_eat == phil->eat_count
+			&& args->number_of_times_each_philosopher_must_eat_bool == true))
 		{
 			pthread_mutex_lock(&args->stop_dinner_mutex);
 			if (!args->stop_dinner) // Check the flag to prevent multiple death messages
@@ -250,7 +139,7 @@ void *philosopher_fn(void *arg)
 		print_state(phil->phil_id, "is sleeping", args);
 		ft_usleep(args->time_to_sleep, args);
 		print_state(phil->phil_id, "is thinking", args);
-		usleep(5500);
+		usleep(10750); // 11000 dead
 	}
 	return NULL;
 }
