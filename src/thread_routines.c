@@ -14,9 +14,9 @@
 
 void	*monitor_fn(void *arg)
 {
-	t_arguments	*args;
+	t_args	*args;
 
-	args = (t_arguments *)arg;
+	args = (t_args *)arg;
 	while (1)
 	{
 		pthread_mutex_lock(&args->stop_dinner_mutex);
@@ -31,12 +31,39 @@ void	*monitor_fn(void *arg)
 	return (NULL);
 }
 
+bool	check_stop_dinner(t_args *args)
+{
+	bool	stop;
+
+	pthread_mutex_lock(&args->stop_dinner_mutex);
+	stop = args->stop_dinner;
+	pthread_mutex_unlock(&args->stop_dinner_mutex);
+	return (stop);
+}
+
+bool	check_philosopher_death(t_phil *phil, t_args *args)
+{
+	bool	should_die;
+
+	pthread_mutex_lock(&args->stop_dinner_mutex);
+	should_die = (timestamp(args) - phil->last_meal_time > args->time_to_die) \
+		|| (args->num_of_times_each_philosopher_must_eat == phil->eat_count \
+		&& args->num_of_times_each_philosopher_must_eat_bool);
+	if (should_die && !args->stop_dinner)
+	{
+		args->stop_dinner = 1;
+		print_state(phil->phil_id, "died", args);
+	}
+	pthread_mutex_unlock(&args->stop_dinner_mutex);
+	return (should_die);
+}
+
 void	*philosopher_fn(void *arg)
 {
 	t_philosopher_args	*phil_args;
-	phil_t				*phil;
+	t_phil				*phil;
 	t_fork				*fork;
-	t_arguments			*args;
+	t_args				*args;
 
 	phil_args = (t_philosopher_args *)arg;
 	phil = phil_args->phil;
@@ -46,26 +73,8 @@ void	*philosopher_fn(void *arg)
 		ft_usleep(args->time_to_eat / 10, args);
 	while (1)
 	{
-		pthread_mutex_lock(&args->stop_dinner_mutex);
-		if (args->stop_dinner)
-		{
-			pthread_mutex_unlock(&args->stop_dinner_mutex);
+		if (check_stop_dinner(args) || check_philosopher_death(phil, args))
 			return (NULL);
-		}
-		pthread_mutex_unlock(&args->stop_dinner_mutex);
-		if ((timestamp(args) - phil->last_meal_time > args->time_to_die) \
-			|| (args->num_of_times_each_philosopher_must_eat == phil->eat_count \
-			&& args->num_of_times_each_philosopher_must_eat_bool == true))
-		{
-			pthread_mutex_lock(&args->stop_dinner_mutex);
-			if (!args->stop_dinner)
-			{
-				args->stop_dinner = 1;
-				print_state(phil->phil_id, "died", args);
-			}
-			pthread_mutex_unlock(&args->stop_dinner_mutex);
-			return (NULL); 
-		}
 		phil_eat(phil, fork, args);
 		print_state(phil->phil_id, "is sleeping", args);
 		ft_usleep(args->time_to_sleep, args);

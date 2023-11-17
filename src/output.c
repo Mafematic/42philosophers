@@ -12,9 +12,10 @@
 
 #include "../inc/philo.h"
 
-void	print_state(int phil_id, const char *state, t_arguments *args)
+void	print_state(int phil_id, const char *state, t_args *args)
 {
 	long long	time;
+
 	pthread_mutex_lock(&args->print_mutex); 
 	time = timestamp(args);
 	printf("%lld %d %s\n", time, phil_id, state);

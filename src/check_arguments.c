@@ -57,7 +57,7 @@ bool	print_usage(void)
 	return (false);
 }
 
-bool	parse_arguments(int argc, char **argv, t_arguments *args)
+bool	parse_arguments(int argc, char **argv, t_args *args)
 {
 	if (argc < 5 || argc > 6)
 		return (print_usage());

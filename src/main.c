@@ -15,7 +15,7 @@
 int main(int argc, char **argv)
 {
 	int i;
-	t_arguments args;
+	t_args args;
 
 	if (!parse_arguments(argc, argv, &args))
 	{
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 	pthread_mutex_init(&args.print_mutex, NULL);
 
 
-	phil_t phil[args.number_of_philosophers];
+	t_phil phil[args.number_of_philosophers];
 	t_fork fork[args.number_of_philosophers];
 	t_philosopher_args phil_args[args.number_of_philosophers];
 
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
 }
 
 
-int check_for_stop(t_arguments *args) {
+int check_for_stop(t_args *args) {
     int stop = 0;
     pthread_mutex_lock(&args->stop_dinner_mutex);
     stop = args->stop_dinner;

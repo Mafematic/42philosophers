@@ -12,7 +12,7 @@
 
 #include "../inc/philo.h"
 
-long long	timestamp(t_arguments *args)
+long long	timestamp(t_args *args)
 {
 	struct timeval	tv;
 	long long		current_time;
@@ -22,7 +22,7 @@ long long	timestamp(t_arguments *args)
 	return (current_time - args->start_time);
 }
 
-void	ft_usleep(int ms, t_arguments *args)
+void	ft_usleep(int ms, t_args *args)
 {
 	long int	time;
 
