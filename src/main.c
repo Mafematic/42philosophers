@@ -30,6 +30,8 @@ int main(int argc, char **argv)
 	pthread_mutex_init(&args.stop_dinner_mutex, NULL);
 	args.have_started = 0;
 	pthread_mutex_init(&args.have_started_mutex, NULL);
+	pthread_mutex_init(&args.print_mutex, NULL);
+
 
 	phil_t phil[args.number_of_philosophers];
 	t_fork fork[args.number_of_philosophers];
@@ -96,6 +98,7 @@ int main(int argc, char **argv)
 	pthread_mutex_destroy(&args.eat_count_mutex);
 	pthread_mutex_destroy(&args.stop_dinner_mutex);
 	pthread_mutex_destroy(&args.have_started_mutex);
+	pthread_mutex_destroy(&args.print_mutex);
 
 	return 0;
 }

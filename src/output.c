@@ -15,7 +15,8 @@
 void	print_state(int phil_id, const char *state, t_arguments *args)
 {
 	long long	time;
-
+	pthread_mutex_lock(&args->print_mutex); 
 	time = timestamp(args);
 	printf("%lld %d %s\n", time, phil_id, state);
+	pthread_mutex_unlock(&args->print_mutex); 
 }

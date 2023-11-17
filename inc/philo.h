@@ -24,6 +24,7 @@ typedef struct s_arguments
 	pthread_mutex_t eat_count_mutex;
 	int stop_dinner;
 	pthread_mutex_t stop_dinner_mutex;
+	pthread_mutex_t print_mutex;
 } t_arguments;
 
 typedef struct phil_
