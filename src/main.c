@@ -16,27 +16,26 @@ int main(int argc, char **argv)
 {
 	int i;
 	t_args args;
+	t_phil *phil;
+	t_fork *fork;
+	t_philosopher_args *phil_args;
 
 	if (!parse_arguments(argc, argv, &args))
-	{
 		return 1;
-	}
 
-	struct timeval te;
-	gettimeofday(&te, NULL);
-	args.start_time = te.tv_sec * 1000LL + te.tv_usec / 1000;
+	phil = (t_phil *)malloc(sizeof(t_phil) * args.number_of_philosophers);
+	fork = (t_fork *)malloc(sizeof(t_fork) * args.number_of_philosophers);
+	phil_args = (t_philosopher_args *)malloc(sizeof(t_philosopher_args) * args.number_of_philosophers);
+	
+	gettimeofday(&args.te, NULL);
+	args.start_time = args.te.tv_sec * 1000LL + args.te.tv_usec / 1000;
 	pthread_mutex_init(&args.eat_count_mutex, NULL);
 	args.stop_dinner = 0;
 	pthread_mutex_init(&args.stop_dinner_mutex, NULL);
 	args.have_started = 0;
 	pthread_mutex_init(&args.have_started_mutex, NULL);
 	pthread_mutex_init(&args.print_mutex, NULL);
-
-
-	t_phil phil[args.number_of_philosophers];
-	t_fork fork[args.number_of_philosophers];
-	t_philosopher_args phil_args[args.number_of_philosophers];
-
+	
 	/* Initialize all forks */
 	i = 0;
 	while (i < args.number_of_philosophers)
@@ -100,23 +99,9 @@ int main(int argc, char **argv)
 	pthread_mutex_destroy(&args.have_started_mutex);
 	pthread_mutex_destroy(&args.print_mutex);
 
+	free(phil);
+	free(fork);
+	free(phil_args);
+
 	return 0;
 }
-
-
-int check_for_stop(t_args *args) {
-    int stop = 0;
-    pthread_mutex_lock(&args->stop_dinner_mutex);
-    stop = args->stop_dinner;
-    pthread_mutex_unlock(&args->stop_dinner_mutex);
-    return stop;
-}
-
-/* To Dos
-Add logic for time arguments when starting the function
-if (time_to_die <= (time_to_eat + time_to_sleep + buffer_time)) {
-
-Implement stop of process, when eat_count has been reached for all
-
-
-*/

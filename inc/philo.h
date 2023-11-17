@@ -37,6 +37,7 @@ typedef struct s_args
 	int				stop_dinner;
 	pthread_mutex_t	stop_dinner_mutex;
 	pthread_mutex_t	print_mutex;
+	struct timeval 	te;
 }	t_args;
 
 typedef struct s_phil
