@@ -18,14 +18,13 @@ static t_fork	*phil_right_fork(t_phil *phil, t_fork *fork, t_args *args)
 
 	index = phil->phil_id - 1;
 	if (index == 0)
-		return (&fork[args->number_of_philosophers - 1]);
+		return (&fork[args->num_of_philos - 1]);
 	return (&fork[index - 1]);
 }
 
 static t_fork	*phil_left_fork(t_phil *phil, t_fork *fork)
 {
 	int	index;
-
 	index = phil->phil_id - 1;
 	return (&fork[index]);
 }

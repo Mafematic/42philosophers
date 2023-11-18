@@ -46,6 +46,16 @@ bool	check_philosopher_death(t_phil *phil, t_args *args)
 	bool	should_die;
 
 	pthread_mutex_lock(&args->stop_dinner_mutex);
+
+	long long current_timestamp = timestamp(args);
+    long long time_since_last_meal = current_timestamp - phil->last_meal_time;
+	 // Debugging print statements
+    printf("Checking death for philosopher %d\n", phil->phil_id);
+    printf("Current timestamp: %lld\n", current_timestamp);
+    printf("Last meal time: %lld\n", phil->last_meal_time);
+    printf("Time since last meal: %lld\n", time_since_last_meal);
+    printf("Time to die threshold: %d\n", args->time_to_die);
+
 	should_die = (timestamp(args) - phil->last_meal_time > args->time_to_die) \
 		|| (args->num_of_times_each_philosopher_must_eat == phil->eat_count \
 		&& args->num_of_times_each_philosopher_must_eat_bool);
@@ -60,12 +70,12 @@ bool	check_philosopher_death(t_phil *phil, t_args *args)
 
 void	*philosopher_fn(void *arg)
 {
-	t_philosopher_args	*phil_args;
+	t_phil_args			*phil_args;
 	t_phil				*phil;
 	t_fork				*fork;
 	t_args				*args;
 
-	phil_args = (t_philosopher_args *)arg;
+	phil_args = (t_phil_args *)arg;
 	phil = phil_args->phil;
 	fork = phil_args->fork;
 	args = phil_args->args;

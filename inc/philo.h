@@ -23,7 +23,7 @@
 
 typedef struct s_args
 {
-	int				number_of_philosophers;
+	int				num_of_philos;
 	int				time_to_die;
 	int				time_to_eat;
 	int				time_to_sleep;
@@ -60,7 +60,7 @@ typedef struct s_phil_args
 	t_phil	*phil;
 	t_fork	*fork;
 	t_args	*args;
-}	t_philosopher_args;
+}	t_phil_args;
 
 void		ft_usleep(int ms, t_args *args);
 void		*monitor_fn(void *arg);
