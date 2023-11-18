@@ -52,8 +52,8 @@ static long	ft_atol(const char *nptr)
 
 bool	print_usage(void)
 {
-	write(2, "Usage: ./philo <number_of_philosophers> <time_to_die> <time_to_eat> \
-		<time_to_sleep> [num_of_times_each_philosopher_must_eat]\n", 128);
+	write(2, "Usage: ./philo <number_of_philosophers > 0> <time_to_die> <time_to_eat> \
+		<time_to_sleep> [num_of_times_each_philosopher_must_eat]\n", 132);
 	return (false);
 }
 

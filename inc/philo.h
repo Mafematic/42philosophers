@@ -37,7 +37,7 @@ typedef struct s_args
 	int				stop_dinner;
 	pthread_mutex_t	stop_dinner_mutex;
 	pthread_mutex_t	print_mutex;
-	struct timeval 	te;
+	struct timeval	te;
 }	t_args;
 
 typedef struct s_phil
@@ -62,10 +62,13 @@ typedef struct s_phil_args
 	t_args	*args;
 }	t_phil_args;
 
+bool		check_stop_dinner(t_args *args);
+bool		check_philosopher_death(t_phil *phil, t_args *args);
+void		cleanup(t_phil_args *phil_args);
 void		ft_usleep(int ms, t_args *args);
 void		*monitor_fn(void *arg);
 bool		parse_arguments(int argc, char **argv, t_args *args);
-void		phil_eat(t_phil *phil, t_fork *fork, t_args *args);
+bool		phil_eat(t_phil *phil, t_fork *fork, t_args *args);
 void		*philosopher_fn(void *arg);
 void		print_state(int phil_id, const char *state, t_args *args);
 long long	timestamp(t_args *args);

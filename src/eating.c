@@ -25,6 +25,7 @@ static t_fork	*phil_right_fork(t_phil *phil, t_fork *fork, t_args *args)
 static t_fork	*phil_left_fork(t_phil *phil, t_fork *fork)
 {
 	int	index;
+
 	index = phil->phil_id - 1;
 	return (&fork[index]);
 }
@@ -40,7 +41,7 @@ static void	phil_release_both_forks(t_phil *phil, t_fork *fork, t_args *args)
 	pthread_mutex_unlock(&right_fork->mutex);
 }
 
-static void	phil_get_access_both_forks(t_phil *phil, t_fork *fork, t_args *args)
+static bool	phil_get_access_both_forks(t_phil *phil, t_fork *fork, t_args *args)
 {
 	t_fork	*left_fork;
 	t_fork	*right_fork;
@@ -58,14 +59,21 @@ static void	phil_get_access_both_forks(t_phil *phil, t_fork *fork, t_args *args)
 	else
 		second_fork = left_fork;
 	pthread_mutex_lock(&first_fork->mutex);
+	if (check_stop_dinner(args) || check_philosopher_death(phil, args))
+	{
+		pthread_mutex_unlock(&first_fork->mutex);
+		return (false);
+	}
 	print_state(phil->phil_id, "has taken a fork", args);
 	pthread_mutex_lock(&second_fork->mutex);
 	print_state(phil->phil_id, "has taken a fork", args);
+	return (true);
 }
 
-void	phil_eat(t_phil *phil, t_fork *fork, t_args *args)
+bool	phil_eat(t_phil *phil, t_fork *fork, t_args *args)
 {
-	phil_get_access_both_forks(phil, fork, args);
+	if (!phil_get_access_both_forks(phil, fork, args))
+		return (false);
 	pthread_mutex_lock(&phil->mutex);
 	phil->last_meal_time = timestamp(args);
 	print_state(phil->phil_id, "is eating", args);
@@ -73,4 +81,5 @@ void	phil_eat(t_phil *phil, t_fork *fork, t_args *args)
 	ft_usleep(args->time_to_eat, args);
 	pthread_mutex_unlock(&phil->mutex);
 	phil_release_both_forks(phil, fork, args);
+	return (true);
 }

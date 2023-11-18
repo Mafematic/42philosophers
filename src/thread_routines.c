@@ -31,41 +31,30 @@ void	*monitor_fn(void *arg)
 	return (NULL);
 }
 
-bool	check_stop_dinner(t_args *args)
+bool	sleeping(t_args *args, t_phil *phil)
 {
-	bool	stop;
-
 	pthread_mutex_lock(&args->stop_dinner_mutex);
-	stop = args->stop_dinner;
+	if (args->stop_dinner)
+	{
+		pthread_mutex_unlock(&args->stop_dinner_mutex);
+		return (false);
+	}
+	print_state(phil->phil_id, "is sleeping", args);
 	pthread_mutex_unlock(&args->stop_dinner_mutex);
-	return (stop);
+	return (true);
 }
 
-bool	check_philosopher_death(t_phil *phil, t_args *args)
+bool	thinking(t_args *args, t_phil *phil)
 {
-	bool	should_die;
-
 	pthread_mutex_lock(&args->stop_dinner_mutex);
-
-	long long current_timestamp = timestamp(args);
-    long long time_since_last_meal = current_timestamp - phil->last_meal_time;
-	 // Debugging print statements
-    printf("Checking death for philosopher %d\n", phil->phil_id);
-    printf("Current timestamp: %lld\n", current_timestamp);
-    printf("Last meal time: %lld\n", phil->last_meal_time);
-    printf("Time since last meal: %lld\n", time_since_last_meal);
-    printf("Time to die threshold: %d\n", args->time_to_die);
-
-	should_die = (timestamp(args) - phil->last_meal_time > args->time_to_die) \
-		|| (args->num_of_times_each_philosopher_must_eat == phil->eat_count \
-		&& args->num_of_times_each_philosopher_must_eat_bool);
-	if (should_die && !args->stop_dinner)
+	if (args->stop_dinner)
 	{
-		args->stop_dinner = 1;
-		print_state(phil->phil_id, "died", args);
+		pthread_mutex_unlock(&args->stop_dinner_mutex);
+		return (false);
 	}
+	print_state(phil->phil_id, "is thinking", args);
 	pthread_mutex_unlock(&args->stop_dinner_mutex);
-	return (should_die);
+	return (true);
 }
 
 void	*philosopher_fn(void *arg)
@@ -83,13 +72,14 @@ void	*philosopher_fn(void *arg)
 		ft_usleep(args->time_to_eat / 10, args);
 	while (1)
 	{
-		if (check_stop_dinner(args) || check_philosopher_death(phil, args))
-			return (NULL);
-		phil_eat(phil, fork, args);
-		print_state(phil->phil_id, "is sleeping", args);
+		if (!phil_eat(phil, fork, args))
+			break ;
+		if (!sleeping(args, phil))
+			break ;
 		ft_usleep(args->time_to_sleep, args);
-		print_state(phil->phil_id, "is thinking", args);
-		usleep(10750);
+		if (!thinking(args, phil))
+			break ;
+		usleep(50);
 	}
 	return (NULL);
 }

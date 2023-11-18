@@ -4,7 +4,8 @@ CFLAGS = -g -Wall -Werror -Wextra
 
 # Source dir and files
 SRC_DIR = src
-SRCS = src/check_arguments.c src/main.c src/output.c src/philosophers.c src/time.c src/thread_routines.c
+SRCS = src/check_arguments.c src/main.c src/output.c src/eating.c src/time.c src/thread_routines.c \
+		src/check_death.c src/cleanup.c
 
 # Object files
 OBJ_DIR = obj
