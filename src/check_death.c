@@ -29,7 +29,8 @@ bool	check_philosopher_death(t_phil *phil, t_args *args)
 	pthread_mutex_lock(&args->stop_dinner_mutex);
 	should_die = (timestamp(args) - phil->last_meal_time > args->time_to_die) \
 		|| (args->num_of_times_each_philosopher_must_eat == phil->eat_count \
-		&& args->num_of_times_each_philosopher_must_eat_bool);
+		&& args->num_of_times_each_philosopher_must_eat_bool) \
+		|| args->num_of_philos == 1;
 	if (should_die && !args->stop_dinner)
 	{
 		args->stop_dinner = 1;
