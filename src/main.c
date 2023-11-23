@@ -36,7 +36,7 @@ int	join_threads(t_phil_args *phil_args, pthread_t monitor, int created)
 
 void	init_mutexes(t_args *args)
 {
-	pthread_mutex_init(&args->eat_count_mutex, NULL);
+	pthread_mutex_init(&args->eaten_mutex, NULL);
 	args->stop_dinner = 0;
 	pthread_mutex_init(&args->stop_dinner_mutex, NULL);
 	args->have_started = 0;
@@ -54,6 +54,7 @@ void	init(t_phil_args *phil_args, t_args *args)
 	fork = (t_fork *)malloc(sizeof(t_fork) * args->num_of_philos);
 	gettimeofday(&args->te, NULL);
 	args->start_time = args->te.tv_sec * 1000LL + args->te.tv_usec / 1000;
+	args->phil_eaten = 0;
 	init_mutexes(args);
 	i = 0;
 	while (i < args->num_of_philos)

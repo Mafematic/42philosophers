@@ -23,7 +23,7 @@ void	cleanup(t_phil_args *phil_args)
 		pthread_mutex_destroy(&phil_args->phil[i].mutex);
 		i++;
 	}
-	pthread_mutex_destroy(&phil_args->args->eat_count_mutex);
+	pthread_mutex_destroy(&phil_args->args->eaten_mutex);
 	pthread_mutex_destroy(&phil_args->args->stop_dinner_mutex);
 	pthread_mutex_destroy(&phil_args->args->have_started_mutex);
 	pthread_mutex_destroy(&phil_args->args->print_mutex);

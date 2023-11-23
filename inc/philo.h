@@ -32,8 +32,8 @@ typedef struct s_args
 	long long		start_time;
 	int				have_started;
 	pthread_mutex_t	have_started_mutex;
-	int				eat_count;
-	pthread_mutex_t	eat_count_mutex;
+	int				phil_eaten;
+	pthread_mutex_t	eaten_mutex;
 	int				stop_dinner;
 	pthread_mutex_t	stop_dinner_mutex;
 	pthread_mutex_t	print_mutex;

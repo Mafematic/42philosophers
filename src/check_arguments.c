@@ -52,8 +52,8 @@ static long	ft_atol(const char *nptr)
 
 bool	print_usage(void)
 {
-	write(2, "Usage: ./philo <number_of_philosophers > 0> <time_to_die> <time_to_eat> \
-		<time_to_sleep> [num_of_times_each_philosopher_must_eat]\n", 132);
+	write(2, "\033[0;31mUsage: All arguments should be > 0:\033[0m\n./philo <number_of_philosophers> <time_to_die> <time_to_eat> \
+<time_to_sleep> [num_of_times_each_philosopher_must_eat]\n", 154);
 	return (false);
 }
 
@@ -70,7 +70,7 @@ bool	parse_arguments(int argc, char **argv, t_args *args)
 	args->time_to_sleep = ft_atol(argv[4]);
 	if (argc == 6)
 	{
-		if (ft_atol(argv[5]) < 0)
+		if (ft_atol(argv[5]) <= 0)
 			return (print_usage());
 		args->num_of_times_each_philosopher_must_eat = ft_atol(argv[5]);
 		args->num_of_times_each_philosopher_must_eat_bool = (true);
