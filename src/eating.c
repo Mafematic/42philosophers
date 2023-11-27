@@ -45,27 +45,12 @@ static bool	phil_get_access_both_forks(t_phil *phil, t_fork *fork, t_args *args)
 {
 	t_fork	*left_fork;
 	t_fork	*right_fork;
-	t_fork	*first_fork;
-	t_fork	*second_fork;
 
 	left_fork = phil_left_fork(phil, fork);
 	right_fork = phil_right_fork(phil, fork, args);
-	if (left_fork->fork_id < right_fork->fork_id) 
-		first_fork = left_fork;
-	else 
-		first_fork = right_fork;
-	if (left_fork->fork_id < right_fork->fork_id) 
-		second_fork = right_fork;
-	else
-		second_fork = left_fork;
-	pthread_mutex_lock(&first_fork->mutex);
-	if (check_stop_dinner(args) || check_philosopher_death(phil, args))
-	{
-		pthread_mutex_unlock(&first_fork->mutex);
+	if (!lock_forks_and_check(phil, left_fork, right_fork, args))
 		return (false);
-	}
 	print_state(phil->phil_id, "has taken a fork", args);
-	pthread_mutex_lock(&second_fork->mutex);
 	print_state(phil->phil_id, "has taken a fork", args);
 	return (true);
 }
@@ -78,7 +63,7 @@ bool	phil_eat(t_phil *phil, t_fork *fork, t_args *args)
 	phil->last_meal_time = timestamp(args);
 	print_state(phil->phil_id, "is eating", args);
 	phil->eat_count++;
-	ft_usleep(args->time_to_eat, args);
+	ft_usleep(args->time_to_eat, args, phil);
 	pthread_mutex_lock(&args->eaten_mutex);
 	if (phil->eat_count == args->num_of_times_each_philosopher_must_eat)
 		args->phil_eaten++;

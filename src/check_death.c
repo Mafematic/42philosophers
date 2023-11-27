@@ -22,36 +22,42 @@ bool	check_stop_dinner(t_args *args)
 	return (stop);
 }
 
-static int	check_if_all_have_eaten(int phil_eaten, t_args *args)
+static bool	check_all_philos_eaten(t_args *args)
 {
-	if (phil_eaten)
+	bool	all_philos_eaten;
+
+	pthread_mutex_lock(&args->eaten_mutex);
+	all_philos_eaten = (args->phil_eaten == args->num_of_philos);
+	pthread_mutex_unlock(&args->eaten_mutex);
+	if (all_philos_eaten)
 	{
-		args->stop_dinner = 1;
-		pthread_mutex_lock(&args->eaten_mutex);
-		printf("\033[0;32mAll philos have eaten.\033[0m\n");
-		pthread_mutex_unlock(&args->eaten_mutex);
-		return (1);
+		pthread_mutex_lock(&args->stop_dinner_mutex);
+		if (!args->stop_dinner)
+		{
+			args->stop_dinner = 1;
+			pthread_mutex_unlock(&args->stop_dinner_mutex);
+			pthread_mutex_lock(&args->print_mutex);
+			printf("\033[0;32mAll philos have eaten.\033[0m\n");
+			pthread_mutex_unlock(&args->print_mutex);
+			return (true);
+		}
+		pthread_mutex_unlock(&args->stop_dinner_mutex);
 	}
-	return (0);
+	return (false);
 }
 
 bool	check_philosopher_death(t_phil *phil, t_args *args)
 {
-	bool	should_die;
 	bool	stop_dinner_flag;
-	bool	all_philos_eaten;
+	bool	should_die;
 
+	if (check_all_philos_eaten(args))
+		return (true);
 	pthread_mutex_lock(&args->stop_dinner_mutex);
 	stop_dinner_flag = args->stop_dinner;
 	pthread_mutex_unlock(&args->stop_dinner_mutex);
-	pthread_mutex_lock(&args->eaten_mutex);
-	all_philos_eaten = (args->phil_eaten == args->num_of_philos);
-	pthread_mutex_unlock(&args->eaten_mutex);
-	if (check_if_all_have_eaten(all_philos_eaten, args))
-		return (all_philos_eaten);
 	should_die = (timestamp(args) - phil->last_meal_time > args->time_to_die) \
-					|| all_philos_eaten \
-					|| args->num_of_philos == 1;
+				|| args->num_of_philos == 1;
 	if (should_die && !stop_dinner_flag)
 	{
 		pthread_mutex_lock(&args->stop_dinner_mutex);

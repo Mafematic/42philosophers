@@ -33,6 +33,8 @@ void	*monitor_fn(void *arg)
 
 bool	sleeping(t_args *args, t_phil *phil)
 {
+	if (check_philosopher_death(phil, args))
+		return (false);
 	pthread_mutex_lock(&args->stop_dinner_mutex);
 	if (args->stop_dinner)
 	{
@@ -41,6 +43,7 @@ bool	sleeping(t_args *args, t_phil *phil)
 	}
 	print_state(phil->phil_id, "is sleeping", args);
 	pthread_mutex_unlock(&args->stop_dinner_mutex);
+	ft_usleep(args->time_to_sleep, args, phil);
 	return (true);
 }
 
@@ -69,17 +72,17 @@ void	*philosopher_fn(void *arg)
 	fork = phil_args->fork;
 	args = phil_args->args;
 	if (phil->phil_id % 2 == 0)
-		ft_usleep(args->time_to_eat / 10, args);
+		ft_usleep(args->time_to_eat / 10, args, phil);
 	while (1)
 	{
 		if (!phil_eat(phil, fork, args))
 			break ;
 		if (!sleeping(args, phil))
 			break ;
-		ft_usleep(args->time_to_sleep, args);
+		ft_usleep(args->time_to_sleep, args, phil);
 		if (!thinking(args, phil))
 			break ;
-		usleep(50);
+		ft_usleep(5, args, phil);
 	}
 	return (NULL);
 }

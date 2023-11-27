@@ -65,7 +65,11 @@ typedef struct s_phil_args
 bool		check_stop_dinner(t_args *args);
 bool		check_philosopher_death(t_phil *phil, t_args *args);
 void		cleanup(t_phil_args *phil_args);
-void		ft_usleep(int ms, t_args *args);
+void		decide_fork_order(t_fork *left_fork, t_fork *right_fork, \
+				t_fork **first_fork, t_fork **second_fork);
+void		ft_usleep(int ms, t_args *args, t_phil *phil);
+bool		lock_forks_and_check(t_phil *phil, t_fork *left_fork, \
+				t_fork *right_fork, t_args *args);
 void		*monitor_fn(void *arg);
 bool		parse_arguments(int argc, char **argv, t_args *args);
 bool		phil_eat(t_phil *phil, t_fork *fork, t_args *args);

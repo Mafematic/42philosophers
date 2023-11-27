@@ -1,11 +1,11 @@
 # Compiler and flags
 CC = cc
-CFLAGS = -g -Wall -Werror -Wextra
+CFLAGS = -Wall -Werror -Wextra
 
 # Source dir and files
 SRC_DIR = src
 SRCS = src/check_arguments.c src/main.c src/output.c src/eating.c src/time.c src/thread_routines.c \
-		src/check_death.c src/cleanup.c
+		src/check_death.c src/cleanup.c src/fork_utils.c
 
 # Object files
 OBJ_DIR = obj

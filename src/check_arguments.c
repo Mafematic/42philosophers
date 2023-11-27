@@ -52,8 +52,8 @@ static long	ft_atol(const char *nptr)
 
 bool	print_usage(void)
 {
-	write(2, "\033[0;31mUsage: All arguments should be > 0:\033[0m\n./philo <number_of_philosophers> <time_to_die> <time_to_eat> \
-<time_to_sleep> [num_of_times_each_philosopher_must_eat]\n", 154);
+	printf("\033[0;31mUsage: All arguments should be > 0:\n./philo <number_of_philosophers> <time_to_die> <time_to_eat> \
+<time_to_sleep> [num_of_times_each_philosopher_must_eat]\n\033[0m");
 	return (false);
 }
 
