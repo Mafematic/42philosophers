@@ -76,7 +76,7 @@ int	create_threads(pthread_t *monitor, t_args *args, t_phil_args *phil_args)
 {
 	int	i;
 
-	if (pthread_create(monitor, NULL, monitor_fn, (void *)args) != 0)
+	if (pthread_create(monitor, NULL, monitor_fn, (void *)phil_args) != 0)
 	{
 		printf("Failed to create monitor thread\n");
 		return (1);

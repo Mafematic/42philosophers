@@ -63,7 +63,8 @@ bool	phil_eat(t_phil *phil, t_fork *fork, t_args *args)
 	phil->last_meal_time = timestamp(args);
 	print_state(phil->phil_id, "is eating", args);
 	phil->eat_count++;
-	ft_usleep(args->time_to_eat, args, phil);
+	if (!ft_usleep(args->time_to_eat, args, phil))
+		return false;
 	pthread_mutex_lock(&args->eaten_mutex);
 	if (phil->eat_count == args->num_of_times_each_philosopher_must_eat)
 		args->phil_eaten++;

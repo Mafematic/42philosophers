@@ -14,21 +14,26 @@
 
 void	*monitor_fn(void *arg)
 {
-	t_args	*args;
+	t_phil_args	*phil_args;
+	
+	phil_args = (t_phil_args *)arg;
+	t_args *args;
+	args = phil_args->args;
 
-	args = (t_args *)arg;
-	while (1)
-	{
-		pthread_mutex_lock(&args->stop_dinner_mutex);
-		if (args->stop_dinner)
-		{
-			pthread_mutex_unlock(&args->stop_dinner_mutex);
-			return (NULL);
-		}
-		pthread_mutex_unlock(&args->stop_dinner_mutex);
-		usleep(50);
-	}
-	return (NULL);
+	t_phil *phil;
+	phil = phil_args->phil;
+	while (1) {
+        for (int i = 0; i < args->num_of_philos; i++) {
+            if (check_philosopher_death(&phil[i], args)) {
+                pthread_mutex_lock(&args->stop_dinner_mutex);
+                args->stop_dinner = 1;
+                pthread_mutex_unlock(&args->stop_dinner_mutex);
+                return NULL; // Exit the monitor thread if any philosopher dies
+            }
+        }
+        usleep(500); // Check periodically (e.g., every 5 milliseconds)
+    }
+    return NULL;
 }
 
 bool	sleeping(t_args *args, t_phil *phil)
@@ -43,7 +48,8 @@ bool	sleeping(t_args *args, t_phil *phil)
 	}
 	print_state(phil->phil_id, "is sleeping", args);
 	pthread_mutex_unlock(&args->stop_dinner_mutex);
-	ft_usleep(args->time_to_sleep, args, phil);
+	if (!ft_usleep(args->time_to_sleep, args, phil))
+		return false;
 	return (true);
 }
 
@@ -57,6 +63,7 @@ bool	thinking(t_args *args, t_phil *phil)
 	}
 	print_state(phil->phil_id, "is thinking", args);
 	pthread_mutex_unlock(&args->stop_dinner_mutex);
+	usleep(10);
 	return (true);
 }
 
@@ -79,10 +86,8 @@ void	*philosopher_fn(void *arg)
 			break ;
 		if (!sleeping(args, phil))
 			break ;
-		ft_usleep(args->time_to_sleep, args, phil);
 		if (!thinking(args, phil))
 			break ;
-		ft_usleep(5, args, phil);
 	}
 	return (NULL);
 }
