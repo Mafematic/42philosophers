@@ -47,6 +47,7 @@ typedef struct s_phil
 	int				eat_count;
 	long long		last_meal_time;
 	pthread_mutex_t	mutex;
+	pthread_mutex_t	death_mutex;
 }	t_phil;
 
 typedef struct s_fork

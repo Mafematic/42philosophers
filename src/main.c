@@ -65,6 +65,7 @@ void	init(t_phil_args *phil_args, t_args *args)
 		phil[i].eat_count = 0;
 		phil[i].last_meal_time = timestamp(args);
 		pthread_mutex_init(&phil[i].mutex, NULL);
+		pthread_mutex_init(&phil[i].death_mutex, NULL);
 		phil_args[i].phil = &phil[i];
 		phil_args[i].fork = fork;
 		phil_args[i].args = args;

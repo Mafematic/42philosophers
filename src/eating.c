@@ -59,8 +59,9 @@ bool	phil_eat(t_phil *phil, t_fork *fork, t_args *args)
 {
 	if (!phil_get_access_both_forks(phil, fork, args))
 		return (false);
-	pthread_mutex_lock(&phil->mutex);
+	pthread_mutex_lock(&phil->death_mutex);
 	phil->last_meal_time = timestamp(args);
+	pthread_mutex_unlock(&phil->death_mutex);
 	print_state(phil->phil_id, "is eating", args);
 	phil->eat_count++;
 	if (!ft_usleep(args->time_to_eat, args, phil))
@@ -69,7 +70,7 @@ bool	phil_eat(t_phil *phil, t_fork *fork, t_args *args)
 	if (phil->eat_count == args->num_of_times_each_philosopher_must_eat)
 		args->phil_eaten++;
 	pthread_mutex_unlock(&args->eaten_mutex);
-	pthread_mutex_unlock(&phil->mutex);
+	
 	phil_release_both_forks(phil, fork, args);
 	return (true);
 }

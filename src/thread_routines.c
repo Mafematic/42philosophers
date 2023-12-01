@@ -21,17 +21,24 @@ void	*monitor_fn(void *arg)
 	args = phil_args->args;
 
 	t_phil *phil;
-	phil = phil_args->phil;
-	while (1) {
-        for (int i = 0; i < args->num_of_philos; i++) {
-            if (check_philosopher_death(&phil[i], args)) {
+
+	int i;
+	while (1)
+	{
+		i = 0;
+        while (i < args->num_of_philos)
+		{
+			phil = phil_args->phil;
+            if (check_philosopher_death(&phil[i], args))
+			{
                 pthread_mutex_lock(&args->stop_dinner_mutex);
                 args->stop_dinner = 1;
                 pthread_mutex_unlock(&args->stop_dinner_mutex);
-                return NULL; // Exit the monitor thread if any philosopher dies
+                return NULL;
             }
+			i++;
         }
-        usleep(500); // Check periodically (e.g., every 5 milliseconds)
+        usleep(500);
     }
     return NULL;
 }
