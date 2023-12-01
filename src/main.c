@@ -39,8 +39,6 @@ void	init_mutexes(t_args *args)
 	pthread_mutex_init(&args->eaten_mutex, NULL);
 	args->stop_dinner = 0;
 	pthread_mutex_init(&args->stop_dinner_mutex, NULL);
-	args->have_started = 0;
-	pthread_mutex_init(&args->have_started_mutex, NULL);
 	pthread_mutex_init(&args->print_mutex, NULL);
 }
 
@@ -64,7 +62,6 @@ void	init(t_phil_args *phil_args, t_args *args)
 		phil[i].phil_id = i + 1;
 		phil[i].eat_count = 0;
 		phil[i].last_meal_time = timestamp(args);
-		pthread_mutex_init(&phil[i].mutex, NULL);
 		pthread_mutex_init(&phil[i].death_mutex, NULL);
 		phil_args[i].phil = &phil[i];
 		phil_args[i].fork = fork;
@@ -82,9 +79,6 @@ int	create_threads(pthread_t *monitor, t_args *args, t_phil_args *phil_args)
 		printf("Failed to create monitor thread\n");
 		return (1);
 	}
-	pthread_mutex_lock(&args->have_started_mutex);
-	args->have_started = 1;
-	pthread_mutex_unlock(&args->have_started_mutex);
 	i = 0;
 	while (i < args->num_of_philos)
 	{

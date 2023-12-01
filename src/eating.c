@@ -65,12 +65,11 @@ bool	phil_eat(t_phil *phil, t_fork *fork, t_args *args)
 	print_state(phil->phil_id, "is eating", args);
 	phil->eat_count++;
 	if (!ft_usleep(args->time_to_eat, args, phil))
-		return false;
+		return (false);
 	pthread_mutex_lock(&args->eaten_mutex);
-	if (phil->eat_count == args->num_of_times_each_philosopher_must_eat)
+	if (phil->eat_count == args->num_of_times_philo_must_eat)
 		args->phil_eaten++;
 	pthread_mutex_unlock(&args->eaten_mutex);
-	
 	phil_release_both_forks(phil, fork, args);
 	return (true);
 }

@@ -31,16 +31,7 @@ int	ft_usleep(int ms, t_args *args, t_phil *phil)
 	{
 		usleep(10);
 		if (check_philosopher_death(phil, args))
-			return 0;
+			return (0);
 	}
-	return 1;
+	return (1);
 }
-
-/*void	ft_usleep_no_check(int ms, t_args *args)
-{
-	long int	time;
-
-	time = timestamp(args);
-	while (timestamp(args) - time < ms)
-		usleep(ms / 10);
-}*/

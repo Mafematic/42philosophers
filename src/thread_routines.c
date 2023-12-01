@@ -15,32 +15,30 @@
 void	*monitor_fn(void *arg)
 {
 	t_phil_args	*phil_args;
-	
+	t_args		*args;
+	t_phil		*phil;
+	int			i;
+
 	phil_args = (t_phil_args *)arg;
-	t_args *args;
 	args = phil_args->args;
-
-	t_phil *phil;
-
-	int i;
 	while (1)
 	{
 		i = 0;
-        while (i < args->num_of_philos)
+		while (i < args->num_of_philos)
 		{
 			phil = phil_args->phil;
-            if (check_philosopher_death(&phil[i], args))
+			if (check_philosopher_death(&phil[i], args))
 			{
-                pthread_mutex_lock(&args->stop_dinner_mutex);
-                args->stop_dinner = 1;
-                pthread_mutex_unlock(&args->stop_dinner_mutex);
-                return NULL;
-            }
+				pthread_mutex_lock(&args->stop_dinner_mutex);
+				args->stop_dinner = 1;
+				pthread_mutex_unlock(&args->stop_dinner_mutex);
+				return (NULL);
+			}
 			i++;
-        }
-        usleep(500);
-    }
-    return NULL;
+		}
+		usleep(500);
+	}
+	return (NULL);
 }
 
 bool	sleeping(t_args *args, t_phil *phil)
@@ -56,7 +54,7 @@ bool	sleeping(t_args *args, t_phil *phil)
 	print_state(phil->phil_id, "is sleeping", args);
 	pthread_mutex_unlock(&args->stop_dinner_mutex);
 	if (!ft_usleep(args->time_to_sleep, args, phil))
-		return false;
+		return (false);
 	return (true);
 }
 

@@ -72,13 +72,9 @@ bool	parse_arguments(int argc, char **argv, t_args *args)
 	{
 		if (ft_atol(argv[5]) <= 0)
 			return (print_usage());
-		args->num_of_times_each_philosopher_must_eat = ft_atol(argv[5]);
-		args->num_of_times_each_philosopher_must_eat_bool = (true);
+		args->num_of_times_philo_must_eat = ft_atol(argv[5]);
 	}
 	else
-	{
-		args->num_of_times_each_philosopher_must_eat = 0;
-		args->num_of_times_each_philosopher_must_eat_bool = (false);
-	}
+		args->num_of_times_philo_must_eat = 0;
 	return (true);
 }

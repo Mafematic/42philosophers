@@ -20,13 +20,11 @@ void	cleanup(t_phil_args *phil_args)
 	while (i < phil_args->args->num_of_philos)
 	{
 		pthread_mutex_destroy(&phil_args->fork[i].mutex);
-		pthread_mutex_destroy(&phil_args->phil[i].mutex);
 		pthread_mutex_destroy(&phil_args->phil[i].death_mutex);
 		i++;
 	}
 	pthread_mutex_destroy(&phil_args->args->eaten_mutex);
 	pthread_mutex_destroy(&phil_args->args->stop_dinner_mutex);
-	pthread_mutex_destroy(&phil_args->args->have_started_mutex);
 	pthread_mutex_destroy(&phil_args->args->print_mutex);
 	free(phil_args->phil);
 	free(phil_args->fork);

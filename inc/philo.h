@@ -27,11 +27,8 @@ typedef struct s_args
 	int				time_to_die;
 	int				time_to_eat;
 	int				time_to_sleep;
-	int				num_of_times_each_philosopher_must_eat;
-	bool			num_of_times_each_philosopher_must_eat_bool;
+	int				num_of_times_philo_must_eat;
 	long long		start_time;
-	int				have_started;
-	pthread_mutex_t	have_started_mutex;
 	int				phil_eaten;
 	pthread_mutex_t	eaten_mutex;
 	int				stop_dinner;
@@ -46,7 +43,6 @@ typedef struct s_phil
 	pthread_t		thread_handle;
 	int				eat_count;
 	long long		last_meal_time;
-	pthread_mutex_t	mutex;
 	pthread_mutex_t	death_mutex;
 }	t_phil;
 
